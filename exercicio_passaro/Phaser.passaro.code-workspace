@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../Phaser"
+		},
+		{
+			"path": "../exercicio_peixe"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Phaser"
+	}
+}
