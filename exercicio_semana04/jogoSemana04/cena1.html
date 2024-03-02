@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- nome do meu jogo -->
+    <title>Keep the Light</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+      /* ajustando a posição do meu jogo na tela */
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+      // configurando meu jogo com phaser e escolhendo a resolução do game
+      var config = {
+        type: Phaser.AUTO,
+        width: 1600,
+        height: 900,
+        // configurando a gravidade do game
+        physics: {
+          default: "arcade",
+          arcade: {
+            gravity: { y: 300 },
+            debug: false,
+          },
+        },
+        scene: {
+          preload: preload,
+          create: create,
+          update: update,
+        },
+      };
+
+      var game = new Phaser.Game(config);
+
+      // criando as variaveis para meu jogo
+      let sky;
+      let bomba;
+      let agua;
+      let chamas;
+      let player;
+      let plataforma;
+      let chao;
+      let pontos = 0;
+      let textPontos;
+      let gameOver = false
+
+      // carregando as imagens que serão usadas
+      function preload() {
+        this.load.image("sky", "assets/sky.jpg");
+        this.load.image("agua", "assets/agua.png");
+        this.load.image("fogo", "assets/fogo.png");
+        this.load.image("player", "assets/personagem.png");
+        this.load.image("plataforma", "assets/plataforma.jpg");
+        this.load.image("chao", "assets/chao.jpg");
+      }
+
+      // adicionando na tela as imagens que serão usada
+      function create() {
+        this.add.image(800, 450, "sky");
+        // this.physics.add serve para adicionar fisica aos objetos, como gravidade
+        // staticGroup serve para manter um objeto estático e não afetar ele com a gravidade 
+        plataforma = this.physics.add.staticGroup();
+        chao = this.physics.add.staticGroup();
+        // setScale serve para alterar a escala do objeto e refreshBody serve para atualizar o corpo fisico do objeto
+        chao.create(800, 860, "chao").setScale(0.5).refreshBody();
+        plataforma.create(200, 650, "plataforma").setScale(0.3).refreshBody();
+        plataforma.create(70, 250, "plataforma").setScale(0.3).refreshBody();
+        plataforma.create(600, 450, "plataforma").setScale(0.3).refreshBody();
+        plataforma.create(1000, 600, "plataforma").setScale(0.3).refreshBody();
+        plataforma.create(1300, 450, "plataforma").setScale(0.3).refreshBody();
+        plataforma.create(1600, 700, "plataforma").setScale(0.3).refreshBody();
+        plataforma.create(900, 170, "plataforma").setScale(0.3).refreshBody();
+
+        // adicionando nosso personagem no jogo
+        player = this.physics.add.image(100, 450, "player").setScale(0.23);
+        // setBounce serve para definir o quanto nosso objeto vai quicar quando colidir com outro
+        player.setBounce(0.2);
+        // setCollideWorldBounds serve para fazer com que o objeto colida com as bordas do jogo
+        player.setCollideWorldBounds(true);
+        // definindo a gravidade do nosso personagem
+        player.body.setGravityY(300);
+
+        // definindo colisão entre o jogador com o chão e o jogador com a plataforma
+        this.physics.add.collider(player, chao);
+        this.physics.add.collider(player, plataforma);
+
+        // criando o teclado
+        cursors = this.input.keyboard.createCursorKeys();
+
+        // criando o grupo dos foguinhos e definindo como vão aparecer 
+        chamas = this.physics.add.group({
+          key: "fogo",
+          repeat: 19,
+          setXY: { x: 110, y: 0, stepX: 70 },
+        });
+
+        // definindo a escala e a elasticidade vertical do nosso grupo de fogos
+        chamas.children.iterate(function (child) {
+          child.setScale(0.125, 0.125);
+          child.setBounceY(Phaser.Math.FloatBetween(0.4, 0, 8));
+        });
+
+        // adicionando colisão para as chamas com o chao, chamas com plataforma
+        this.physics.add.collider(chamas, chao);
+        this.physics.add.collider(chamas, plataforma);
+
+        // adicionando colisão entre a chama e o player e adicionando overlap para verificar se esses dois objetos estão se colidindo, para assim o player coletar os pontos
+        this.physics.add.overlap(player, chamas, coletaFogo, null, this);
+
+        // criando o sistema de placar
+        textPontos = this.add.text(16, 16, "Pontos: 0", {
+          fontSize: "50px",
+          fill: "#000",
+          fontStyle: "bold",
+        });
+
+        // criando nossa bomba e adicionando fisica a ela
+        agua = this.physics.add.group();
+
+        // adicionando colisão entre a agua com os objetos do jogo
+        this.physics.add.collider(agua, chao);
+        this.physics.add.collider(agua, plataforma);
+        this.physics.add.collider(player, agua, hitAgua, null, this);
+      }
+
+      // configurando o sistema de if para os teclados e definindo a velocidade do player 
+      function update() {
+        if (cursors.left.isDown) {
+          player.setVelocityX(-400);
+        } else if (cursors.right.isDown) {
+          player.setVelocityX(400);
+        } else {
+          player.setVelocityX(0);
+        }
+
+        // configurando o pulo do player
+        if (cursors.up.isDown && player.body.touching.down) {
+          player.setVelocityY(-600);
+        }
+      }
+
+      // criando a função para a coleta do fogo
+      function coletaFogo(player, fogo) {
+        // disableBody para desativar o fogo assim que o player colidir com ele
+        fogo.disableBody(true, true);
+
+        // fazendo o sistema de pontos assim que o player coletar o fogo
+        pontos += 1;
+        textPontos.setText("Pontos: " + pontos);
+
+        // configurando para reaparecer as chamas assim que ficarem em 0
+        if (chamas.countActive(true) === 0) {
+          chamas.children.iterate(function (child) {
+            child.enableBody(true, child.x, 0, true, true);
+          });
+
+          // criando a posição da água
+          let posicaoAgua =
+            player.x > 800
+              ? Phaser.Math.Between(400, 800)
+              : Phaser.Math.Between(0, 800);
+
+          // usando for para criar 3 bombas assim que o player pegar a primeira remessa de fogos
+          for (let i = 0; i < 3; i++) {
+            let bomba = agua.create(posicaoAgua, 16, "agua");
+            bomba.setScale(0.125);
+            bomba.setBounce(1);
+            bomba.setCollideWorldBounds(true);
+            bomba.setVelocity(Phaser.Math.Between(-200, 200), 20);
+          }
+        }
+      }
+
+      // função para assim que a agua colidir com o player.
+      function hitAgua(player, agua) {
+        this.physics.pause();
+        // definindo a nova cor de sobreposição do player
+        player.setTint(0xff0000);
+        // definindo game over como true
+        gameOver = true;
+        if (gameOver = true) {
+          // caso o jogo acabe, o player será redirecionado para a tela de game over (cena2)
+          window.open('cena2.html', '_self')
+        }
+      }
+    </script>
+  </body>
+</html>

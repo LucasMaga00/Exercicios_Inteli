@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- nome do meu jogo -->
+    <title>Keep the Light</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+      /* ajustando a posição do meu jogo na tela */
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+      // configurando meu jogo com phaser e escolhendo a resolução do game
+      var config = {
+        type: Phaser.AUTO,
+        width: 1600,
+        height: 900,
+        scene: {
+          preload: preload,
+          create: create,
+          update: update,
+        },
+      };
+
+      var game = new Phaser.Game(config);
+
+      //funcao para criarHitbox e acessar funções
+      function criarHitbox(graphics, x, y, width, height, funcao) {
+        graphics.setInteractive(
+          new Phaser.Geom.Rectangle(x, y, width, height),
+          Phaser.Geom.Rectangle.Contains
+        ); //cria o retangulo
+        graphics.on("pointerdown", funcao); //realizar funcao ao clicar no retangulo
+      }
+
+      function preload() {
+        // carregando as imagens
+        this.load.image("bg", "assets/tela-inicio.jpg");
+      }
+
+      function create() {
+        // adicionando na tela meu background para o jogo
+        this.add.image(800, 450, "bg");
+
+        // criando retangulo para o botão funcionar + configurando abertura de outra janela para começar a cena da gameplay
+        const play = this.add.graphics();
+        criarHitbox(play, 96.9, 302.1, 523, 55.3, () => {
+            window.open('cena1.html', '_self');
+        });
+      }
+
+      function update() {}
+    </script>
+
+  </body>
+</html>
